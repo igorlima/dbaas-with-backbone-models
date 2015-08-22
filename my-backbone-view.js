@@ -87,7 +87,8 @@ define(['jquery', 'backbone', 'modalModel', 'edgeCollection', 'vertexCollection'
       });
 
       view.edgeCollection.on('add', function(model) {
-        ForceView.trigger('add-link', model.toJSON());
+        var edge = model.toJSON();
+        edge.id && ForceView.trigger('add-link', edge);
       });
 
       view.edgeCollection.on('remove', function(model) {
@@ -119,6 +120,7 @@ define(['jquery', 'backbone', 'modalModel', 'edgeCollection', 'vertexCollection'
       });
 
       ForceView.on('link-added', function(link) {
+        ForceView.trigger('remove-link', link); //it will be added laterm after the server sent back an id.
         view.edgeCollection.add([link]);
       });
 

@@ -150,6 +150,7 @@ io.on('connection', function(socket) {
       function(vertex, callback) {
         if (vertex) {
           link.source.id = vertex._id;
+          socket.emit( 'node-added', link.source );
         }
         callback();
       },
@@ -166,16 +167,14 @@ io.on('connection', function(socket) {
       function(vertex, callback) {
         if (vertex) {
           link.target.id = vertex._id;
+          socket.emit( 'node-added', link.target );
         }
         callback();
       }
     ], function (err) {
       err || edge.save( function(err) {
         socket.broadcast.emit( 'node-added', link.source );
-        socket.emit( 'node-added', link.source );
-
         socket.broadcast.emit( 'node-added', link.target );
-        socket.emit( 'node-added', link.target );
 
         socket.broadcast.emit( 'link-added', link );
         socket.emit( 'link-added', link );
@@ -187,7 +186,7 @@ io.on('connection', function(socket) {
   socket.on('remove-link', function(link) {
     if (link && link.id) {
       Edge.findById( link.id, function(err, edge) {
-        edge.remove( function(err) {
+        edge && edge.remove( function(err) {
           socket.broadcast.emit( 'link-removed', link );
           socket.emit( 'link-removed', link );
         } );
