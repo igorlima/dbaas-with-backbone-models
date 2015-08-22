@@ -7,8 +7,6 @@ define(['backbone', 'edgeModel', 'io'], function(Backbone, Edge, io) {
     initialize: function( options ) {
       var collection = this;
 
-      // TODO clean up well reconnect, and then sync
-
       socket.on( 'link-added', function(link) {
         collection.add([link]);
       } );
@@ -32,7 +30,13 @@ define(['backbone', 'edgeModel', 'io'], function(Backbone, Edge, io) {
     },
 
     sync: function() {
-      socket.emit('retrieve-all-nodes');
+      var collection = this;
+      socket.on( 'disconnect', function() {
+        collection.reset();
+      });
+      socket.on( 'connect', function() {
+        socket.emit('retrieve-all-nodes');
+      });
     }
 
   });

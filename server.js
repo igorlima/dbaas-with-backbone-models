@@ -98,10 +98,6 @@ io.on('connection', function(socket) {
     });
   });
 
-  // socket.on('remove-all-nodes', function() {
-  // ...
-  // });
-
   socket.on('add-node', function( node, cb ) {
     var vertex = new Vertex( node );
     node.id = vertex._id;

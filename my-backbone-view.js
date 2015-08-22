@@ -23,6 +23,7 @@ define(['jquery', 'backbone', 'modalModel', 'edgeCollection', 'vertexCollection'
 
         //TODO use a callback, as soon as vertex sync, then sync edges
         view.vertexCollection.sync();
+        view.edgeCollection.sync();
       });
     },
 
@@ -86,12 +87,20 @@ define(['jquery', 'backbone', 'modalModel', 'edgeCollection', 'vertexCollection'
         ForceView.trigger('edit-node', model.toJSON());
       } );
 
+      view.vertexCollection.on('reset', function() {
+        ForceView.trigger('init');
+      });
+
       view.edgeCollection.on('add', function(model) {
         ForceView.trigger('add-link', model.toJSON());
       });
 
       view.edgeCollection.on('remove', function(model) {
         ForceView.trigger('remove-link', model.toJSON());
+      });
+
+      view.edgeCollection.on('reset', function() {
+        ForceView.trigger('init');
       });
 
     },

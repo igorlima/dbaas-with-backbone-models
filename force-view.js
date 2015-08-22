@@ -23,6 +23,7 @@ define(['d3', 'jquery', 'backbone'], function(d3, $, Backbone) {
 
   function init(callback) {
     // init svg
+    $("#chart").empty();
     outer = d3.select("#chart")
       .append("svg:svg")
       .attr("width", width)
