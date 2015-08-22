@@ -120,7 +120,8 @@ define(['jquery', 'backbone', 'modalModel', 'edgeCollection', 'vertexCollection'
       });
 
       ForceView.on('link-added', function(link) {
-        ForceView.trigger('remove-link', link); //it will be added laterm after the server sent back an id.
+        ForceView.trigger('remove-link', link);
+        //it will be added later, after the server sent back the id.
         view.edgeCollection.add([link]);
       });
 
