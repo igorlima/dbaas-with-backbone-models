@@ -7,6 +7,8 @@ define(['backbone', 'edgeModel', 'io'], function(Backbone, Edge, io) {
     initialize: function( options ) {
       var collection = this;
 
+      // TODO clean up well reconnect, and then sync
+
       socket.on( 'link-added', function(link) {
         collection.add([link]);
       } );
@@ -15,12 +17,16 @@ define(['backbone', 'edgeModel', 'io'], function(Backbone, Edge, io) {
         collection.remove([link]);
       } );
 
-      collection.on("add", function(link) {
+      collection.on("add", function(model) {
+        var link = model.toJSON();
+        if (link.id) {
+          return;
+        }
         socket.emit( 'add-link', link );
       });
 
-      collection.on("remove", function(link) {
-        socket.emit( 'remove-link', link );
+      collection.on("remove", function(model) {
+        socket.emit( 'remove-link', model.toJSON() );
       });
 
     },

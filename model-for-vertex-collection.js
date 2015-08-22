@@ -7,6 +7,8 @@ define(['backbone', 'vertexModel', 'io'], function(Backbone, Vertex, io) {
     initialize: function( options ) {
       var collection = this;
 
+      // TODO clean up well reconnect, and then sync
+
       socket.on( 'node-added', function(node) {
         collection.add([node]);
       } );
@@ -28,14 +30,12 @@ define(['backbone', 'vertexModel', 'io'], function(Backbone, Vertex, io) {
         socket.emit( 'add-node', node );
       });
 
-      collection.on("remove", function(node) {
-        socket.emit( 'remove-node', node );
+      collection.on("remove", function(model) {
+        socket.emit( 'remove-node', model.toJSON() );
       });
 
       collection.on('change', function(model, value) {
-        //if (value) {
-          socket.emit( 'edit-node', model.toJSON() );
-        //}
+        socket.emit( 'edit-node', model.toJSON() );
       }, collection);
 
     },

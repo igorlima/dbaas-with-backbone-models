@@ -33,7 +33,7 @@ var express    = require('express'),
  * Thanks.
  *
  * COMPOSE_URI=mongodb://example:example@dogen.mongohq.com:10087/dbaas-with-backbone-models
- * COMPOSE_URI=mongodb://example:example@127.0.0.1:27017/graph
+ * COMPOSE_URI=mongodb://example:example@127.0.0.1:27017/dbaas-with-backbone-models
  */
 mongoose.connect(process.env.COMPOSE_URI, function (error) {
     if (error) console.error(error);
@@ -61,14 +61,20 @@ io.on('connection', function(socket) {
         return;
       }
       Edge.findById(linkId, function(err, link) {
+        console.warn( 'link removed to clean up the db: ' + linkId );
         link.remove();
       });
     } );
   }
 
   function cleanUpLinkIfNeeded(link) {
-    removeLinkIfNodeWasDeleted( link.id, link.source.id );
-    removeLinkIfNodeWasDeleted( link.id, link.target.id );
+    if (!link.source || !link.target) {
+      console.warn( 'link removed to clean up the db: ' + link.id );
+      link.remove();
+    } else {
+      removeLinkIfNodeWasDeleted( link.id, link.source.id );
+      removeLinkIfNodeWasDeleted( link.id, link.target.id );
+    }
   }
 
   console.log('a user connected');
@@ -122,7 +128,7 @@ io.on('connection', function(socket) {
   socket.on('remove-node', function(node) {
     if (node && node.id) {
       Vertex.findById( node.id, function(err, vertex) {
-        vertex.remove( function(err) {
+        vertex && vertex.remove( function(err) {
           socket.emit( 'node-removed', node );
           socket.broadcast.emit( 'node-removed', node );
         });

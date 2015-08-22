@@ -20,6 +20,8 @@ define(['jquery', 'backbone', 'modalModel', 'edgeCollection', 'vertexCollection'
         view.edgeCollection = new EdgeCollection();
         view.vertexCollection = new VertexCollection();
         view.sync();
+
+        //TODO use a callback, as soon as vertex sync, then sync edges
         view.vertexCollection.sync();
       });
     },
@@ -76,22 +78,20 @@ define(['jquery', 'backbone', 'modalModel', 'edgeCollection', 'vertexCollection'
         ForceView.trigger('remove-node', {});
       });
 
-      view.vertexCollection.on('remove', function(node) {
-        ForceView.trigger('remove-node', node);
+      view.vertexCollection.on('remove', function(model) {
+        ForceView.trigger('remove-node', model.toJSON());
       } );
 
       view.vertexCollection.on('change', function(model, value) {
-        //if (value) {
-          ForceView.trigger('edit-node', model.toJSON());
-        //}
+        ForceView.trigger('edit-node', model.toJSON());
       } );
 
-      view.edgeCollection.on('add', function(link) {
-        ForceView.trigger('add-link', link);
+      view.edgeCollection.on('add', function(model) {
+        ForceView.trigger('add-link', model.toJSON());
       });
 
-      view.edgeCollection.on('remove', function(link) {
-        ForceView.trigger('remove-link', link);
+      view.edgeCollection.on('remove', function(model) {
+        ForceView.trigger('remove-link', model.toJSON());
       });
 
     },
