@@ -82,7 +82,7 @@ io.on('connection', function(socket) {
     console.log('user disconnected');
   });
 
-  socket.on('retrieve-all-nodes', function() {
+  socket.on('retrieve-all-nodes-and-edges', function() {
     Vertex.find( function( err, nodes) {
       nodes.forEach(function(node) {
         node.id = node._id;

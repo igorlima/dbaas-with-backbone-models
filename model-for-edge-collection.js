@@ -35,7 +35,7 @@ define(['backbone', 'edgeModel', 'io'], function(Backbone, Edge, io) {
         collection.reset();
       });
       socket.on( 'connect', function() {
-        socket.emit('retrieve-all-nodes');
+        socket.emit('retrieve-all-nodes-and-edges');
       });
     }
 
