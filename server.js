@@ -6,6 +6,7 @@ var express    = require('express'),
     http   = require('http').Server(app),
     io     = require('socket.io')(http),
     extend = require('extend'),
+    async  = require('async'),
 
     // Mongoose Schema definition
     Edge = mongoose.model('Edge', {
@@ -62,7 +63,7 @@ io.on('connection', function(socket) {
       }
       Edge.findById(linkId, function(err, link) {
         console.warn( 'link removed to clean up the db: ' + linkId );
-        link.remove();
+        link && link.remove();
       });
     } );
   }
@@ -98,11 +99,10 @@ io.on('connection', function(socket) {
     });
   });
 
-  socket.on('add-node', function( node, cb ) {
+  socket.on('add-node', function( node ) {
     var vertex = new Vertex( node );
     node.id = vertex._id;
     vertex.save(function (err) {
-      cb && cb(node);
       socket.broadcast.emit( 'node-added', node );
       socket.emit( 'node-added', node );
     });
@@ -132,14 +132,57 @@ io.on('connection', function(socket) {
     }
   });
 
-  socket.on('add-link', function(link, cb) {
+  socket.on('add-link', function(link) {
     var edge = new Edge( link );
     link.id = edge._id;
-    edge.save( function(err) {
-      cb && cb(link);
-      socket.broadcast.emit( 'link-added', link );
-      socket.emit( 'link-added', link );
-    } );
+
+    async.waterfall([
+      //saving SOURCE object if it's not exist
+      function(callback) {
+        var id = link.source && link.source.id;
+        if (id) Vertex.findById( id, callback );
+        else callback(null, null);
+      },
+      function(vertex, callback) {
+        if (vertex) callback(null, null);
+        else Vertex.create(link.source, callback);
+      },
+      function(vertex, callback) {
+        if (vertex) {
+          link.source.id = vertex._id;
+        }
+        callback();
+      },
+      //saving TARGET object if it's not exist
+      function(callback) {
+        var id = link.target && link.target.id;
+        if (id) Vertex.findById( id, callback );
+        else callback(null, null);
+      },
+      function(vertex, callback) {
+        if (vertex) callback(null, null);
+        else Vertex.create(link.target, callback);
+      },
+      function(vertex, callback) {
+        if (vertex) {
+          link.target.id = vertex._id;
+        }
+        callback();
+      }
+    ], function (err) {
+      debugger;
+      err || edge.save( function(err) {
+        socket.broadcast.emit( 'node-added', link.source );
+        socket.emit( 'node-added', link.source );
+
+        socket.broadcast.emit( 'node-added', link.target );
+        socket.emit( 'node-added', link.target );
+
+        socket.broadcast.emit( 'link-added', link );
+        socket.emit( 'link-added', link );
+      } );
+    });
+
   });
 
   socket.on('remove-link', function(link) {

@@ -2,6 +2,7 @@
   "name": "pubsub-with-backbone-events",
   "version": "0.0.1",
   "dependencies": {
+    "async": "1.4.2",
     "express": "~3.4.7",
     "body-parser": "~1.13.1",
     "mongoose": "~4.1.2",
