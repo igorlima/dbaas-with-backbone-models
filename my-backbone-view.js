@@ -16,14 +16,9 @@ define(['jquery', 'backbone', 'modalModel', 'edgeCollection', 'vertexCollection'
       view.$el.find('#textColorNode').colorpicker();
 
       ForceView.trigger('init', function() {
-        // TODO: this order seems weird. I should take a look later
         view.edgeCollection = new EdgeCollection();
         view.vertexCollection = new VertexCollection();
         view.sync();
-
-        //TODO use a callback, as soon as vertex sync, then sync edges
-        view.vertexCollection.sync();
-        view.edgeCollection.sync();
       });
     },
 
@@ -103,6 +98,8 @@ define(['jquery', 'backbone', 'modalModel', 'edgeCollection', 'vertexCollection'
         ForceView.trigger('init');
       });
 
+      view.vertexCollection.sync();
+      view.edgeCollection.sync();
     },
 
     syncWithForceView: function() {
