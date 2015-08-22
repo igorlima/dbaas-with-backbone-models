@@ -10,7 +10,11 @@ require.config({
 
     forceView: 'force-view',
     myView: 'my-backbone-view',
-    myModel: 'my-backbone-model',
+    modalModel: 'model-for-my-modal',
+    edgeModel: 'model-for-edge',
+    vertexModel: 'model-for-vertex',
+    edgeCollection: 'model-for-edge-collection',
+    vertexCollection: 'model-for-vertex-collection',
     dbaas: 'dbaas',
     io: '/socket.io/socket.io'
   },

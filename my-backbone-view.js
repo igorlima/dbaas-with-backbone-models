@@ -1,5 +1,5 @@
 
-define(['jquery', 'backbone', 'myModel', 'forceView'], function($, Backbone, MyModel, ForceView) {
+define(['jquery', 'backbone', 'modalModel', 'edgeCollection', 'vertexCollection', 'forceView'], function($, Backbone, ModalModel, EdgeCollection, VertexCollection, ForceView) {
 
   return Backbone.View.extend({
     el: 'body',
@@ -12,21 +12,24 @@ define(['jquery', 'backbone', 'myModel', 'forceView'], function($, Backbone, MyM
 
     initialize: function( options ) {
       var view = this;
-      view.mediatorChannel = $.extend( {}, Backbone.Events );
-      view.model = new MyModel();
+      view.modalModel = new ModalModel();
       view.$el.find('#textColorNode').colorpicker();
 
       ForceView.trigger('init', function() {
+        // TODO: this order seems weird. I should take a look later
+        view.edgeCollection = new EdgeCollection();
+        view.vertexCollection = new VertexCollection();
         view.sync();
+        view.vertexCollection.sync();
       });
     },
 
     textChanged: function() {
-      this.model.set( 'label', this.$el.find('#textNode').val(), { silent: true } );
+      this.modalModel.set( 'label', this.$el.find('#textNode').val(), { silent: true } );
     },
 
     colorChanged: function() {
-      this.model.set( 'color', this.$el.find('#textColorNode').val(), { silent: true } );
+      this.modalModel.set( 'color', this.$el.find('#textColorNode').val(), { silent: true } );
     },
 
     openModal: function() {
@@ -38,25 +41,25 @@ define(['jquery', 'backbone', 'myModel', 'forceView'], function($, Backbone, MyM
     },
 
     editNode: function() {
-      this.mediatorChannel.trigger('edit-node', {
-        id: this.model.get('id'),
-        color: this.model.get('color'),
-        label: this.model.get('label')
+      var vertexModel = this.vertexCollection.get( this.modalModel.get('id') );
+      vertexModel.set( {
+        color: this.modalModel.get('color'),
+        label: this.modalModel.get('label')
       } );
       this.hideModal();
     },
 
     addNode: function() {
-      this.mediatorChannel.trigger('add-node');
+      this.vertexCollection.add([{}]);
     },
 
     sync: function() {
       var view = this;
 
-      view.model.on('change:color', function(model, color) {
+      view.modalModel.on('change:color', function(modalModel, color) {
         view.$el.find('#textColorNode').val( color );
       });
-      view.model.on('change:label', function(model, label) {
+      view.modalModel.on('change:label', function(modalModel, label) {
         view.$el.find('#textNode').val( label );
       });
 
@@ -66,66 +69,42 @@ define(['jquery', 'backbone', 'myModel', 'forceView'], function($, Backbone, MyM
     },
 
     syncWithDBaaS: function() {
-      var mediatorChannel = this.mediatorChannel;
-      require(['dbaas'], function(dbaas) {
+      var view = this;
 
-        mediatorChannel.on('remove-node', function(node) {
-          dbaas.trigger('remove-node', node);
-        });
-
-        mediatorChannel.on('add-link', function(link) {
-          if (link.target.id) {
-            dbaas.trigger( 'add-link', link );
-          }
-        });
-
-        mediatorChannel.on('remove-link', function(link) {
-          dbaas.trigger('remove-link', link);
-        });
-
-        mediatorChannel.on('add-node', function(node, callback) {
-          dbaas.trigger( 'add-node', node || {}, callback );
-        } );
-
-        mediatorChannel.on('edit-node', function(node) {
-          dbaas.trigger( 'edit-node', node );
-        });
-
-        dbaas.on( 'node-added', function(node) {
-          ForceView.trigger('add-node', node );
-          ForceView.trigger('remove-node', {});
-        } );
-
-        dbaas.on('node-removed', function(node) {
-          ForceView.trigger('remove-node', node);
-        });
-
-        dbaas.on( 'node-edited', function(node) {
-          ForceView.trigger('edit-node', node);
-        } );
-
-        dbaas.on( 'link-added', function(link) {
-          ForceView.trigger('add-link', link);
-        } );
-
-        dbaas.on( 'link-removed', function(link) {
-          ForceView.trigger('remove-link', link);
-        } );
-
-        dbaas.trigger('retrieve-all-nodes');
-
+      view.vertexCollection.on('add', function(model) {
+        ForceView.trigger('add-node', model.toJSON() );
+        ForceView.trigger('remove-node', {});
       });
+
+      view.vertexCollection.on('remove', function(node) {
+        ForceView.trigger('remove-node', node);
+      } );
+
+      view.vertexCollection.on('change', function(model, value) {
+        //if (value) {
+          ForceView.trigger('edit-node', model.toJSON());
+        //}
+      } );
+
+      view.edgeCollection.on('add', function(link) {
+        ForceView.trigger('add-link', link);
+      });
+
+      view.edgeCollection.on('remove', function(link) {
+        ForceView.trigger('remove-link', link);
+      });
+
     },
 
     syncWithForceView: function() {
       var view = this;
 
       ForceView.on('node-removed', function(node) {
-        view.mediatorChannel.trigger( 'remove-node', node );
+        view.vertexCollection.remove([node.id]);
       });
 
       ForceView.on('node-edited', function(node) {
-        view.model.set({
+        view.modalModel.set({
           id: node.id,
           color: node.color,
           label: node.label
@@ -134,18 +113,15 @@ define(['jquery', 'backbone', 'myModel', 'forceView'], function($, Backbone, MyM
       });
 
       ForceView.on('link-added', function(link) {
-        view.mediatorChannel.trigger( 'add-link', link );
+        view.edgeCollection.add([link]);
       });
 
       ForceView.on('link-removed', function(link) {
-        view.mediatorChannel.trigger('remove-link', link);
+        view.edgeCollection.remove([link.id]);
       });
 
       ForceView.on('node-and-link-added', function(data) {
-        view.mediatorChannel.trigger( 'add-node', data.node, function( node ) {
-          data.node.id = node.id;
-          ForceView.trigger('link-added', data.link);
-        } );
+        view.edgeCollection.add([data.link]);
       });
 
       ForceView.trigger('remove-node', {});
