@@ -15,7 +15,6 @@ require.config({
     vertexModel: 'model-for-vertex',
     edgeCollection: 'model-for-edge-collection',
     vertexCollection: 'model-for-vertex-collection',
-    dbaas: 'dbaas',
     io: '/socket.io/socket.io'
   },
   shim: {
