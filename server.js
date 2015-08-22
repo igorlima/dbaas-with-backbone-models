@@ -137,7 +137,7 @@ io.on('connection', function(socket) {
     link.id = edge._id;
 
     async.waterfall([
-      //saving SOURCE object if it's not exist
+      //save SOURCE if it's not exist
       function(callback) {
         var id = link.source && link.source.id;
         if (id) Vertex.findById( id, callback );
@@ -153,7 +153,7 @@ io.on('connection', function(socket) {
         }
         callback();
       },
-      //saving TARGET object if it's not exist
+      //save TARGET if it's not exist
       function(callback) {
         var id = link.target && link.target.id;
         if (id) Vertex.findById( id, callback );
@@ -170,7 +170,6 @@ io.on('connection', function(socket) {
         callback();
       }
     ], function (err) {
-      debugger;
       err || edge.save( function(err) {
         socket.broadcast.emit( 'node-added', link.source );
         socket.emit( 'node-added', link.source );
